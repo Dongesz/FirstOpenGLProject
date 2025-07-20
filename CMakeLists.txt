@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(TestProject)
+project(FirstOpenGLProject)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -10,8 +10,8 @@ include_directories(
     lib/glad/include
 )
 
-add_executable(TestProject ${SOURCES})
+add_executable(FirstOpenGLProject ${SOURCES})
 
-target_link_directories(TestProject PRIVATE lib/glfw/lib-mingw)
+target_link_directories(FirstOpenGLProject PRIVATE lib/glfw/lib-mingw)
 
-target_link_libraries(TestProject glfw3 opengl32)
+target_link_libraries(FirstOpenGLProject glfw3 opengl32)
