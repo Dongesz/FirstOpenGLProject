@@ -2,6 +2,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// fuction to keep input alogic organized
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
 // function to deal with after start resizeing of the window
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
@@ -42,6 +49,14 @@ int main()
     // creating render loop
     while (!glfwWindowShouldClose(window))
     {
+        // input calls
+        processInput(window);
+
+        // render commands
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // check and call events and swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
