@@ -11,12 +11,27 @@ const char *vertexShaderSource = "#version 330 core\n"
     "}\0";
 
 // Fragment shader source    
-const char *fragmentShaderSource = "#version 330 core\n"
-         "out vec4 FragColor;\n"
-         "void main()\n"
-         "{\n"
-         "FragColor = vec4(0.3f, 0.3f, 0.9f, 1.0f);\n"
-         "}\0";
+const char* fragmentShaderSource = R"(
+	#version 330 core
+	out vec4 FragColor;
+	in vec2 TexCoords;
+
+	// Egyszerű procedurális fa mintázat UV alapján
+	void main()
+	{
+	    float x = TexCoords.x * 10.0;
+	    float y = TexCoords.y * 10.0;
+	
+	    float ring = sin(3.14159 * sqrt(x * x + y * y));
+	    float grain = fract(x + y);
+	
+	    float brightness = 0.3 + 0.3 * ring + 0.4 * grain;
+	
+	    vec3 woodColor = vec3(0.4, 0.2, 0.05) * brightness;
+	
+	    FragColor = vec4(woodColor, 1.0);
+	}	
+	)";
 
 // fuction to keep input alogic organized
 void processInput(GLFWwindow *window)
@@ -111,38 +126,48 @@ int main()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
    
-    // Creating verticies array with cordinates for three points
     float verticies[] ={
-	    -0.5f, -0.5f, 0.0f, // point one
-	     0.5f, -0.5f, 0.5f, // point two
-	     0.0f,  0.5f, 0.0f  // point three
+	     0.5f,  0.5f, 0.0f, // top right
+	     0.5f, -0.5f, 0.0f, // bottom right
+	    -0.5f, -0.5f, 0.0f, // bottom left
+	    -0.5f,  0.5f, 0.0f	// top left
+    };
+    unsigned int indicies[] = {
+
+	    0,1,3,
+	    1,2,3
     };
 
-    // Creating VertexArrayObject and VertexBufferObject variables
-    unsigned int VAO, VBO;
 
-    // giving VBO, VAO variables the right functionality
+    // Creating VertexArrayObject and VertexBufferObject variables
+    unsigned int VAO, VBO, EBO;
+
+    // Giving VBO, VAO variables the right functionality
     glGenVertexArrays(1, &VAO);       
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
-    // basically running/starting VertexArrayObject
+    // Binfing VAO
     glBindVertexArray(VAO);
 
     // Loading our data(verticies) into VBO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
+
     // Telling openGL how to use these raw verticies
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // creating render loop
+    // Creating render loop
     while (!glfwWindowShouldClose(window))
     {
-        // input calls
+        // Input calls
         processInput(window);
 
-        // render background color
+        // Render background color
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -152,15 +177,15 @@ int main()
 	// Starting VAO 
 	glBindVertexArray(VAO);
 
-	//Drawing the triangle
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	// Drawing the triangle
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        // check and call events and swap buffers
+        // Check and call events and swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // clean up all the resources
+    // Clean up all the resources
     glfwTerminate();
     return 0;
 }
