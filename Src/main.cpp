@@ -14,22 +14,11 @@ const char *vertexShaderSource = "#version 330 core\n"
 const char* fragmentShaderSource = R"(
 	#version 330 core
 	out vec4 FragColor;
-	in vec2 TexCoords;
 
-	// Egyszerű procedurális fa mintázat UV alapján
+	uniform vec3 uColor;
 	void main()
 	{
-	    float x = TexCoords.x * 10.0;
-	    float y = TexCoords.y * 10.0;
-	
-	    float ring = sin(3.14159 * sqrt(x * x + y * y));
-	    float grain = fract(x + y);
-	
-	    float brightness = 0.3 + 0.3 * ring + 0.4 * grain;
-	
-	    vec3 woodColor = vec3(0.4, 0.2, 0.05) * brightness;
-	
-	    FragColor = vec4(woodColor, 1.0);
+	    FragColor = vec4(uColor, 1.0);
 	}	
 	)";
 
@@ -44,6 +33,32 @@ void processInput(GLFWwindow *window)
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
+}
+
+// Helper function to draw the faces of a cube
+void drawFace(int startIndex,int colorLocation ,float r, float g, float b)
+{
+	glUniform3f(colorLocation, r, g, b);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(uintptr_t)(startIndex * sizeof(unsigned int)));
+}
+
+// Function to draw a cube with 6 drawFace calls
+void drawCube(unsigned int shaderProgram)
+{	
+	int colorLocation = glGetUniformLocation(shaderProgram, "uColor");
+	//bottom side
+	drawFace(30, colorLocation,0.0f, 1.0f, 0.0f);
+	//left side
+	drawFace(18, colorLocation, 0.0f, 0.0f, 1.0f);
+	//back side
+	drawFace(6, colorLocation, 1.0f, 0.0f, 0.0f);
+	
+	//top side
+	drawFace(24, colorLocation, 0.0f, 1.0f, 0.0f);
+	//right side
+	drawFace(12, colorLocation, 0.0f, 0.0f, 1.0f);
+	//front side
+	drawFace(0, colorLocation, 1.0f, 0.0f, 0.0f);
 }
 
 int main()
@@ -127,17 +142,63 @@ int main()
     glDeleteShader(fragmentShader);
    
     float verticies[] ={
-	     0.5f,  0.5f, 0.0f, // top right
-	     0.5f, -0.5f, 0.0f, // bottom right
-	    -0.5f, -0.5f, 0.0f, // bottom left
-	    -0.5f,  0.5f, 0.0f	// top left
+	     //front side
+	     0.4f,  0.4f, 0.0f, // top right 
+	     0.4f, -0.4f, 0.0f, // bottom righ
+	    -0.4f, -0.4f, 0.0f, // bottom left
+	    -0.4f,  0.4f, 0.0f,	// top left
+
+	     //back side
+	     0.4f+0.2f,  0.4f+0.2f, -0.4f, // top right
+	     0.4f+0.2f, -0.4f+0.2f, -0.4f, // bottom right
+	    -0.4f+0.2f, -0.4f+0.2f, -0.4f, // bottom left
+	    -0.4f+0.2f,  0.4f+0.2f, -0.4f, // top left
+					    
+	     //right side
+	     0.4f+0.2f, 0.4f+0.2f, -0.4f,  // top right
+	     0.4f+0.2f, -0.4f+0.2f, -0.4f, // bottom right
+	     0.4f, -0.4f, 0.0f,		   // bottom left
+	     0.4f, 0.4f, 0.0f,		   // top left
+
+	     //left side
+	    -0.4f+0.2f,  0.4f+0.2f, -0.4f, // top right
+	    -0.4f+0.2f, -0.4f+0.2f, -0.4f, // bottom right
+	    -0.4f, -0.4f, 0.0f, 	   // bottom left
+	    -0.4f,  0.4f, 0.0f,	       	   // top left
+
+	     //top side
+	     0.4f+0.2f, 0.4f+0.2f, -0.4f, // top right
+	     0.4f, 0.4f, 0.0f,		  // bottom right
+	    -0.4f, 0.4f , 0.0f,		  // bottom left
+	    -0.4f+0.2f, 0.4+0.2f, -0.4f,  // top left
+
+	     //bottom right
+	     0.4f+0.2f, -0.4f+0.2f, -0.4f, // top right
+	     0.4f, -0.4, 0.0f,       	   // bottom right
+	    -0.4f, -0.4f, 0.0f,		   // bottom left
+	    -0.4+0.2, -0.4+0.2, -0.4	   // top left
+
     };
     unsigned int indicies[] = {
-
-	    0,1,3,
-	    1,2,3
+	    //front side
+	    0,1,3, 
+	    1,2,3,
+	    //back side
+	    4,5,7,
+	    5,6,7,
+ 	    //right side
+	    8,9,11,
+	    9,10,11,
+	    //left side
+	    12,13,15,
+	    13,14,15,
+	    //top side
+	    16,17,19,
+	    17,18,19,
+	    //bottom side
+	    20,21,23,
+	    21,22,23
     };
-
 
     // Creating VertexArrayObject and VertexBufferObject variables
     unsigned int VAO, VBO, EBO;
@@ -154,6 +215,7 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
 
+    //Loading data into EBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
 
@@ -173,12 +235,13 @@ int main()
 
 	// Running shaderProgram
 	glUseProgram(shaderProgram);
+	int colorLocation = glGetUniformLocation(shaderProgram, "uColor");
 
 	// Starting VAO 
 	glBindVertexArray(VAO);
 
-	// Drawing the triangle
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	// Drawing the cube
+	drawCube(shaderProgram);
 
         // Check and call events and swap buffers
         glfwSwapBuffers(window);
